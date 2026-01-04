@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Financeiro Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-custom { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: none; }
+        .valor-total { font-size: 2.5rem; font-weight: 800; color: #1a73e8; }
+        .badge-Entrada { background-color: #e6f4ea; color: #1e8e3e; padding: 8px 12px; border-radius: 8px; }
+        .badge-Despesas { background-color: #fce8e6; color: #d93025; padding: 8px 12px; border-radius: 8px; }
+        .btn-primary { background-color: #1a73e8; border: none; border-radius: 8px; padding: 10px; }
+        .btn-success { background-color: #34a853; border: none; border-radius: 8px; padding: 10px; }
+    </style>
+</head>
+<body class="container py-4">
+
+<h1 class="text-center mb-4 fw-bold">Gestão Financeira</h1>
+
+<div class="card-custom">
+    <h5 class="text-muted mb-3">Resumo do Período</h5>
+    <div id="resumoValor" class="valor-total text-center mb-4">R$ 0,00</div>
+    <button onclick="buscarSoma()" class="btn btn-outline-primary w-100 fw-bold">Calcular Soma no Período</button>
+</div>
+
+<div class="card-custom">
+    <h5 class="mb-3">Novo Lançamento</h5>
+    <div class="row g-3">
+        <div class="col-12">
+            <input type="text" id="postDescricao" class="form-control" placeholder="Descrição (ex: Supermercado)">
+        </div>
+        <div class="col-md-6">
+            <input type="number" id="postValor" class="form-control" placeholder="Valor (0.00)">
+        </div>
+        <div class="col-md-6">
+            <input type="date" id="postData" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <input type="text" id="postCategoria" class="form-control" placeholder="Categoria (ex: Alimentação)">
+        </div>
+        <div class="col-md-6">
+            <input type="text" id="postMetodo" class="form-control" placeholder="Método (ex: Cartão de Crédito)">
+        </div>
+        <div class="col-12">
+            <select id="postTipo" class="form-select">
+                <option value="Entrada">Entrada</option>
+                <option value="Despesas">Despesas</option>
+            </select>
+        </div>
+    </div>
+    <button onclick="salvarNoBanco()" class="btn btn-success w-100 mt-4 fw-bold">Salvar Transação</button>
+</div>
+
+<div class="card-custom">
+    <h5 class="mb-3">Filtrar Histórico</h5>
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-4">
+            <label class="small">Início</label>
+            <input type="date" id="inicio" class="form-control">
+        </div>
+        <div class="col-6 col-md-4">
+            <label class="small">Fim</label>
+            <input type="date" id="fim" class="form-control">
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="small">Tipo</label>
+            <select id="tipoDeTransacao" class="form-select">
+                <option value="Entrada">Entrada</option>
+                <option value="Despesas">Despesas</option>
+            </select>
+        </div>
+    </div>
+    <button onclick="BuscarTodos()" class="btn btn-primary w-100 fw-bold">Aplicar Filtro na Tabela</button>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+            <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Método</th>
+                <th>Tipo</th>
+                <th class="text-end">Valor</th>
+            </tr>
+            </thead>
+            <tbody id="tabelaCorpo"></tbody>
+        </table>
+    </div>
+    <button onclick="carregarListaGeral()" class="btn btn-link w-100 text-decoration-none text-muted mt-2">Mostrar Tudo</button>
+</div>
+
+<script>
+    // SALVAR: Envia TODOS os campos para o @PostMapping
+    async function salvarNoBanco() {
+        const transacao = {
+            descricao: document.getElementById('postDescricao').value,
+            valor: parseFloat(document.getElementById('postValor').value),
+            data: document.getElementById('postData').value,
+            categoria: document.getElementById('postCategoria').value,
+            metodoDePagamento: document.getElementById('postMetodo').value,
+            tipoDeTransacao: document.getElementById('postTipo').value
+        };
+
+        const res = await fetch('/api/transacoes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(transacao)
+        });
+
+        if (res.ok) {
+            alert("Salvo com sucesso!");
+            carregarListaGeral();
+        }
+    }
+
+    // FILTRO: Busca por Data e Tipo conforme seu Java
+    async function BuscarTodos() {
+        const i = document.getElementById('inicio').value;
+        const f = document.getElementById('fim').value;
+        const t = document.getElementById('tipoDeTransacao').value;
+
+        if(!i || !f) return alert("Selecione as datas!");
+
+        const url = `/api/transacoes/Buscar?tipoDeTransacao=${t}&inicio=${i}&fim=${f}`;
+        const res = await fetch(url);
+        renderizarTabela(await res.json());
+    }
+
+    // SOMA: Busca valor total conforme seu Java
+    async function buscarSoma() {
+        const i = document.getElementById('inicio').value;
+        const f = document.getElementById('fim').value;
+        const t = document.getElementById('tipoDeTransacao').value;
+
+        const url = `/api/transacoes/soma-periodo?tipo=${t}&inicio=${i}&fim=${f}`;
+        const res = await fetch(url);
+        const valor = await res.json();
+        document.getElementById('resumoValor').innerText = valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+    }
+
+    async function carregarListaGeral() {
+        const res = await fetch('/api/transacoes');
+        renderizarTabela(await res.json());
+    }
+
+    function renderizarTabela(lista) {
+        const corpo = document.getElementById('tabelaCorpo');
+        corpo.innerHTML = '';
+        lista.forEach(item => {
+            const [ano, mes, dia] = item.data.split('-');
+            corpo.innerHTML += `
+                <tr>
+                    <td class="small">${dia}/${mes}/${ano}</td>
+                    <td class="fw-bold">${item.descricao}</td>
+                    <td><span class="text-muted small">${item.categoria || '-'}</span></td>
+                    <td><span class="text-muted small">${item.metodoDePagamento || '-'}</span></td>
+                    <td><span class="badge badge-${item.tipoDeTransacao}">${item.tipoDeTransacao}</span></td>
+                    <td class="text-end fw-bold text-dark">${item.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
+                </tr>`;
+        });
+    }
+
+    window.onload = carregarListaGeral;
+</script>
+</body>
+</html>
