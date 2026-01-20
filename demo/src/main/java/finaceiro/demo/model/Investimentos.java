@@ -11,25 +11,22 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 @Entity
-@Table(name = "tb_transacoes")
+@Table(name = "tb_Investimentos")
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Transacao {
+
+public class Investimentos {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
     @Enumerated(EnumType.STRING)
-    private tipoDeTransacao tipoDeTransacao;
+    private TipoInvestimento TipoInvestimento;
 
-    private BigDecimal valor;
-    private String descricao;
+    private BigDecimal ValorInvestimento;
+    private String NomeInvestimento;
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate data;
+    private LocalDate DataInvestimento;
 
-
-    private Categoria categoria;
-    private MetodoDePagamento metodoDePagamento;
 }

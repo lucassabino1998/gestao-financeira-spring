@@ -7,6 +7,7 @@ import finaceiro.demo.service.TransacaoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.web.ReactiveOffsetScrollPositionHandlerMethodArgumentResolver;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,9 +52,18 @@ public class transacaocontroler {
     }
     @GetMapping("/Buscar")
     public ResponseEntity<List<Transacao>> BuscarTodos(@RequestParam tipoDeTransacao tipoDeTransacao,
-                                                       @RequestParam LocalDate inicio,
-                                                       @RequestParam LocalDate fim) {
+                                                       @RequestParam ("inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                                       LocalDate inicio,
+                                                       @RequestParam ("fim") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                                           LocalDate fim) {
         return ResponseEntity.ok(transacaoService.BuscarDataTipo(tipoDeTransacao, inicio, fim));
+    }
+
+    @GetMapping("/BuscarPeriodo")
+    public ResponseEntity<List<Transacao>>BuscarPeriodo(@RequestParam @DateTimeFormat(iso =DateTimeFormat.ISO.DATE)
+                                                            LocalDate inicio, @RequestParam @DateTimeFormat
+                                                                    (iso =DateTimeFormat.ISO.DATE)LocalDate fim){
+        return ResponseEntity.ok(transacaoService.Buscarperiodo(inicio,fim));
     }
     @GetMapping("/soma-periodo")
     public ResponseEntity<BigDecimal> buscarSoma(

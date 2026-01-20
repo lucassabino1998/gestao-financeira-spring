@@ -22,6 +22,11 @@ public interface TransacaoRepository extends JpaRepository<Transacao, UUID> {
             LocalDate fim
     );
 
+    List<Transacao> findByDataBetween(
+            LocalDate inicio,
+            LocalDate fim
+    );
+
     @Query("SELECT SUM(t.valor) FROM Transacao t WHERE t.tipoDeTransacao = :tipoDeTransacao AND t.data BETWEEN :inicio AND :fim")
     BigDecimal somarPorTipoEPeriodo(
             @Param("tipoDeTransacao") tipoDeTransacao tipoDeTransacao,

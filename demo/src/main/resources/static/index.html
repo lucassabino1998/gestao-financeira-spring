@@ -3,100 +3,361 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Financeiro Pro</title>
+    <title>Painel Financeiro & Investimentos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-custom { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: none; }
-        .valor-total { font-size: 2.5rem; font-weight: 800; color: #1a73e8; }
-        .badge-Entrada { background-color: #e6f4ea; color: #1e8e3e; padding: 8px 12px; border-radius: 8px; }
-        .badge-Despesas { background-color: #fce8e6; color: #d93025; padding: 8px 12px; border-radius: 8px; }
-        .btn-primary { background-color: #1a73e8; border: none; border-radius: 8px; padding: 10px; }
-        .btn-success { background-color: #34a853; border: none; border-radius: 8px; padding: 10px; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .card-custom { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: none; }
+
+        /* Cores Transações */
+        .text-entrada { color: #198754; }
+        .text-saida { color: #dc3545; }
+        .bg-entrada { background-color: #198754; }
+        .bg-saida { background-color: #dc3545; }
+
+        /* Cores Investimento (Roxo) */
+        .border-invest { border-color: #6610f2 !important; }
+        .text-invest { color: #6610f2; }
+        .btn-invest { background-color: #6610f2; color: white; }
+        .btn-invest:hover { background-color: #520dc2; color: white; }
+        .table-invest-head { background-color: #f3eafa; color: #6610f2; }
+
+        .chart-container { position: relative; height: 200px; width: 100%; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .card-custom { box-shadow: none; border: 1px solid #ddd; }
+            body { background-color: white; }
+        }
     </style>
 </head>
 <body class="container py-4">
 
-<h1 class="text-center mb-4 fw-bold">Gestão Financeira</h1>
+<div class="no-print">
+    <h2 class="text-center mb-4 fw-bold text-dark">Painel Financeiro 360º</h2>
 
-<div class="card-custom">
-    <h5 class="text-muted mb-3">Resumo do Período</h5>
-    <div id="resumoValor" class="valor-total text-center mb-4">R$ 0,00</div>
-    <button onclick="buscarSoma()" class="btn btn-outline-primary w-100 fw-bold">Calcular Soma no Período</button>
-</div>
-
-<div class="card-custom">
-    <h5 class="mb-3">Novo Lançamento</h5>
-    <div class="row g-3">
-        <div class="col-12">
-            <input type="text" id="postDescricao" class="form-control" placeholder="Descrição (ex: Supermercado)">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card-custom border-start border-success border-5">
+                <small class="text-muted fw-bold">TOTAL ENTRADAS</small>
+                <h3 id="totalEntradas" class="text-entrada fw-bold">R$ 0,00</h3>
+            </div>
         </div>
-        <div class="col-md-6">
-            <input type="number" id="postValor" class="form-control" placeholder="Valor (0.00)">
+        <div class="col-md-4">
+            <div class="card-custom border-start border-danger border-5">
+                <small class="text-muted fw-bold">TOTAL SAÍDAS</small>
+                <h3 id="totalSaidas" class="text-saida fw-bold">R$ 0,00</h3>
+            </div>
         </div>
-        <div class="col-md-6">
-            <input type="date" id="postData" class="form-control">
-        </div>
-        <div class="col-md-6">
-            <input type="text" id="postCategoria" class="form-control" placeholder="Categoria (ex: Alimentação)">
-        </div>
-        <div class="col-md-6">
-            <input type="text" id="postMetodo" class="form-control" placeholder="Método (ex: Cartão de Crédito)">
+        <div class="col-md-4">
+            <div class="card-custom border-start border-primary border-5">
+                <small class="text-muted fw-bold">SALDO LÍQUIDO</small>
+                <h3 id="saldoFinal" class="text-dark fw-bold">R$ 0,00</h3>
+            </div>
         </div>
         <div class="col-12">
-            <select id="postTipo" class="form-select">
-                <option value="Entrada">Entrada</option>
-                <option value="Despesas">Despesas</option>
-            </select>
+            <div class="card-custom py-3">
+                <label class="small text-muted mb-2 fw-bold">Balanço do Período</label>
+                <div class="progress" style="height: 25px; font-weight: bold;">
+                    <div id="barraEntrada" class="progress-bar bg-entrada" role="progressbar" style="width: 50%">0%</div>
+                    <div id="barraSaida" class="progress-bar bg-saida" role="progressbar" style="width: 50%">0%</div>
+                </div>
+            </div>
         </div>
     </div>
-    <button onclick="salvarNoBanco()" class="btn btn-success w-100 mt-4 fw-bold">Salvar Transação</button>
-</div>
 
-<div class="card-custom">
-    <h5 class="mb-3">Filtrar Histórico</h5>
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-4">
-            <label class="small">Início</label>
-            <input type="date" id="inicio" class="form-control">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card-custom text-center h-100">
+                <h6 class="text-secondary fw-bold mb-3">Origem (Entradas)</h6>
+                <div class="chart-container"><canvas id="chartEntrada"></canvas></div>
+            </div>
         </div>
-        <div class="col-6 col-md-4">
-            <label class="small">Fim</label>
-            <input type="date" id="fim" class="form-control">
+        <div class="col-md-4">
+            <div class="card-custom text-center h-100">
+                <h6 class="text-secondary fw-bold mb-3">Destino (Saídas)</h6>
+                <div class="chart-container"><canvas id="chartSaida"></canvas></div>
+            </div>
         </div>
-        <div class="col-12 col-md-4">
-            <label class="small">Tipo</label>
-            <select id="tipoDeTransacao" class="form-select">
-                <option value="Entrada">Entrada</option>
-                <option value="Despesas">Despesas</option>
-            </select>
+        <div class="col-md-4">
+            <div class="card-custom text-center h-100">
+                <h6 class="text-invest fw-bold mb-3">Carteira Investimentos</h6>
+                <div class="chart-container"><canvas id="chartInvest"></canvas></div>
+                <div class="mt-2 text-invest fw-bold small" id="totalInvestidoDisplay">Carregando...</div>
+            </div>
         </div>
     </div>
-    <button onclick="BuscarTodos()" class="btn btn-primary w-100 fw-bold">Aplicar Filtro na Tabela</button>
-</div>
 
-<div class="card-custom">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
-            <tr>
-                <th>Data</th>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Método</th>
-                <th>Tipo</th>
-                <th class="text-end">Valor</th>
-            </tr>
-            </thead>
-            <tbody id="tabelaCorpo"></tbody>
-        </table>
+    <div class="card-custom">
+        <h5 class="mb-3 text-secondary">📅 Buscar Período (Transações)</h5>
+        <div class="row g-2">
+            <div class="col-md-4"><label class="small fw-bold">Início:</label><input type="date" id="inicio" class="form-control"></div>
+            <div class="col-md-4"><label class="small fw-bold">Fim:</label><input type="date" id="fim" class="form-control"></div>
+            <div class="col-md-4 d-flex align-items-end"><button onclick="BuscarPorData()" class="btn btn-primary w-100 fw-bold">🔍 Buscar</button></div>
+        </div>
     </div>
-    <button onclick="carregarListaGeral()" class="btn btn-link w-100 text-decoration-none text-muted mt-2">Mostrar Tudo</button>
+
+    <div class="card-custom border-top border-warning border-4">
+        <h5 id="tituloForm" class="mb-3 text-primary fw-bold">📝 Nova Transação</h5>
+        <div class="row g-3">
+            <input type="hidden" id="idTransacao">
+            <div class="col-md-6">
+                <label class="small text-muted fw-bold">Descrição</label>
+                <input type="text" id="postDescricao" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="small text-muted fw-bold">Valor (R$)</label>
+                <input type="number" step="0.01" id="postValor" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="small text-muted fw-bold">Data</label>
+                <input type="date" id="postData" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="small text-muted fw-bold">Categoria</label>
+                <select id="postCategoria" class="form-select">
+                    <option value="" disabled selected>Escolha...</option>
+                    <option value="ALIMENTACAO">🍔 Alimentação</option>
+                    <option value="TRANSPORTE">🚗 Transporte</option>
+                    <option value="MORADIA">🏠 Moradia</option>
+                    <option value="LAZER">🎉 Lazer</option>
+                    <option value="SAUDE">💊 Saúde</option>
+                    <option value="EDUCACAO">📚 Educação</option>
+                    <option value="SALARIO">💰 Salário</option>
+                    <option value="VENDAS">📈 Vendas</option>
+                    <option value="OUTROS">⚙️ Outros</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="small text-muted fw-bold">Pagamento</label>
+                <select id="postMetodo" class="form-select">
+                    <option value="" disabled selected>Escolha...</option>
+                    <option value="PIX">💠 PIX</option>
+                    <option value="CARTAO_CREDITO">💳 Cartão de Crédito</option>
+                    <option value="CARTAO_DEBITO">💳 Cartão de Débito</option>
+                    <option value="DINHEIRO">💵 Dinheiro</option>
+                    <option value="BOLETO">📄 Boleto</option>
+                    <option value="TRANSFERENCIA">🏦 Transferência</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="small text-muted fw-bold">Tipo</label>
+                <select id="postTipo" class="form-select">
+                    <option value="Entrada">Entrada</option>
+                    <option value="Despesas">Despesas</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button onclick="salvarNoBanco()" class="btn btn-success w-100 fw-bold">Salvar Transação</button>
+            <button id="btnCancelar" onclick="limparFormulario()" class="btn btn-outline-secondary d-none">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="card-custom p-0 overflow-hidden mb-5">
+        <div class="p-3 bg-light border-bottom no-print">
+            <label class="me-2 fw-bold text-muted">Visualizar:</label>
+            <div class="btn-group w-100" role="group">
+                <button onclick="filtrarVisualizacao('todos')" class="btn btn-outline-dark active" id="btnTodos">📋 Tudo</button>
+                <button onclick="filtrarVisualizacao('entrada')" class="btn btn-outline-success" id="btnEntrada">💰 Entradas</button>
+                <button onclick="filtrarVisualizacao('saida')" class="btn btn-outline-danger" id="btnSaida">💸 Saídas</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Detalhes</th><th class="text-end">Valor</th><th class="text-center no-print">Ações</th></tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <hr class="my-5 border-secondary">
+
+    <div class="no-print">
+        <h3 class="text-center mb-4 text-invest fw-bold">🚀 Área de Investimentos</h3>
+
+        <div class="card-custom border-top border-invest border-5 mb-4">
+            <h5 class="mb-3 text-invest fw-bold">💰 Novo Aporte</h5>
+            <form id="formInvestimento" onsubmit="event.preventDefault(); registrarInvestimento();">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="small fw-bold text-muted">Nome do Investimento</label>
+                        <input type="text" id="invNome" class="form-control" placeholder="Ex: Tesouro Direto" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">Valor (R$)</label>
+                        <input type="number" id="invValor" step="0.01" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">Data</label>
+                        <input type="date" id="invData" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="small fw-bold text-muted">Tipo</label>
+                        <select id="invTipo" class="form-select" required>
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="RENDA_FIXA">Renda Fixa</option>
+                            <option value="ACOES">Ações</option>
+                            <option value="CRIPTOMOEDAS">Criptomoedas</option>
+                            <option value="FUNDOS_IMOBILIARIOS">FIIs</option>
+                            <option value="INVESTIMENTO_EXTERIOR">Exterior</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-invest w-100 fw-bold mt-2">Confirmar Investimento</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-custom p-0 overflow-hidden">
+            <div class="p-3 bg-light border-bottom">
+                <h6 class="text-invest fw-bold mb-0">📋 Meus Ativos</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-invest-head">
+                    <tr>
+                        <th>Data</th>
+                        <th>Nome do Ativo</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Valor Investido</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tabelaInvestimentos">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script>
-    // SALVAR: Envia TODOS os campos para o @PostMapping
+    let listaOriginal = [];
+    let chartEntradaInstance = null, chartSaidaInstance = null, chartInvestInstance = null;
+
+    window.onload = function() {
+        carregarListaGeral();
+        carregarInvestimentos(); // Carrega lista e gráfico
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('postData').value = hoje;
+        document.getElementById('invData').value = hoje;
+    };
+
+    // ============================================
+    // 1. GRÁFICOS
+    // ============================================
+    function renderizarGraficos(listaTransacoes) {
+        const entradasPorCat = {};
+        const saidasPorCat = {};
+        listaTransacoes.forEach(t => {
+            const val = parseFloat(t.valor);
+            const cat = t.categoria || "Outros";
+            if (t.tipoDeTransacao === 'Entrada') entradasPorCat[cat] = (entradasPorCat[cat] || 0) + val;
+            else saidasPorCat[cat] = (saidasPorCat[cat] || 0) + val;
+        });
+        const cores = ['#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6610f2', '#fd7e14'];
+        chartEntradaInstance = criarGrafico('chartEntrada', entradasPorCat, chartEntradaInstance, cores);
+        chartSaidaInstance = criarGrafico('chartSaida', saidasPorCat, chartSaidaInstance, cores);
+    }
+
+    function renderizarGraficoInvestimentos(listaInvest) {
+        const investPorTipo = {};
+        let total = 0;
+        listaInvest.forEach(i => {
+            const val = parseFloat(i.ValorInvestimento) || 0;
+            const tipo = i.TipoInvestimento || "Outros";
+            investPorTipo[tipo] = (investPorTipo[tipo] || 0) + val;
+            total += val;
+        });
+        document.getElementById('totalInvestidoDisplay').innerText = `Total: R$ ${total.toFixed(2)}`;
+        const coresInv = ['#6610f2', '#d63384', '#0d6efd', '#20c997', '#ffc107'];
+        chartInvestInstance = criarGrafico('chartInvest', investPorTipo, chartInvestInstance, coresInv);
+    }
+
+    function criarGrafico(canvasId, dadosObj, instanciaExistente, cores) {
+        if (instanciaExistente) instanciaExistente.destroy();
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const labels = Object.keys(dadosObj);
+        const values = Object.values(dadosObj);
+        if (values.length === 0) { labels.push("Sem dados"); values.push(1); cores = ['#e9ecef']; }
+
+        return new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{ data: values, backgroundColor: cores, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } } }
+        });
+    }
+
+    // ============================================
+    // 2. FUNÇÕES API
+    // ============================================
+    async function carregarListaGeral() {
+        try {
+            const res = await fetch('/api/transacoes');
+            if (res.ok) {
+                listaOriginal = await res.json();
+                renderizarTabela(listaOriginal);
+                calcularPainel(listaOriginal);
+                renderizarGraficos(listaOriginal);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function carregarInvestimentos() {
+        try {
+            const res = await fetch('/api/investimentos');
+            if (res.ok) {
+                const listaInv = await res.json();
+                renderizarGraficoInvestimentos(listaInv);
+                renderizarTabelaInvestimentos(listaInv); // <--- NOVA CHAMADA
+            }
+        } catch(e) { console.log("Erro investimentos:", e); }
+    }
+
+    async function registrarInvestimento() {
+        const payload = {
+            NomeInvestimento: document.getElementById("invNome").value,
+            ValorInvestimento: parseFloat(document.getElementById("invValor").value),
+            TipoInvestimento: document.getElementById("invTipo").value,
+            DataInvestimento: document.getElementById("invData").value
+        };
+
+        try {
+            const response = await fetch('/api/investimentos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (response.ok) {
+                alert("Investimento registrado!");
+                document.getElementById("invNome").value = "";
+                document.getElementById("invValor").value = "";
+                carregarInvestimentos();
+            } else { alert("Erro ao salvar."); }
+        } catch (error) { alert("Erro de conexão."); }
+    }
+
+    async function deletarInvestimento(id) {
+        if(confirm("Deseja resgatar/excluir este investimento?")) {
+            try {
+                await fetch(`/api/investimentos/${id}`, { method: 'DELETE' });
+                carregarInvestimentos();
+            } catch(e) { alert("Erro ao deletar investimento."); }
+        }
+    }
+
     async function salvarNoBanco() {
+        const id = document.getElementById('idTransacao').value;
         const transacao = {
             descricao: document.getElementById('postDescricao').value,
             valor: parseFloat(document.getElementById('postValor').value),
@@ -105,67 +366,129 @@
             metodoDePagamento: document.getElementById('postMetodo').value,
             tipoDeTransacao: document.getElementById('postTipo').value
         };
-
-        const res = await fetch('/api/transacoes', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(transacao)
-        });
-
-        if (res.ok) {
-            alert("Salvo com sucesso!");
-            carregarListaGeral();
-        }
+        const url = id ? `/api/transacoes/${id}` : '/api/transacoes';
+        const metodo = id ? 'PUT' : 'POST';
+        try {
+            await fetch(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(transacao) });
+            alert("Salvo!"); limparFormulario(); carregarListaGeral();
+        } catch(e) { alert("Erro de conexão."); }
     }
 
-    // FILTRO: Busca por Data e Tipo conforme seu Java
-    async function BuscarTodos() {
-        const i = document.getElementById('inicio').value;
-        const f = document.getElementById('fim').value;
-        const t = document.getElementById('tipoDeTransacao').value;
+    // ============================================
+    // 3. RENDERIZAR TABELAS
+    // ============================================
 
-        if(!i || !f) return alert("Selecione as datas!");
-
-        const url = `/api/transacoes/Buscar?tipoDeTransacao=${t}&inicio=${i}&fim=${f}`;
-        const res = await fetch(url);
-        renderizarTabela(await res.json());
-    }
-
-    // SOMA: Busca valor total conforme seu Java
-    async function buscarSoma() {
-        const i = document.getElementById('inicio').value;
-        const f = document.getElementById('fim').value;
-        const t = document.getElementById('tipoDeTransacao').value;
-
-        const url = `/api/transacoes/soma-periodo?tipo=${t}&inicio=${i}&fim=${f}`;
-        const res = await fetch(url);
-        const valor = await res.json();
-        document.getElementById('resumoValor').innerText = valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    }
-
-    async function carregarListaGeral() {
-        const res = await fetch('/api/transacoes');
-        renderizarTabela(await res.json());
-    }
-
+    // --- TABELA TRANSAÇÕES ---
     function renderizarTabela(lista) {
         const corpo = document.getElementById('tabelaCorpo');
         corpo.innerHTML = '';
+        if(lista.length === 0) { corpo.innerHTML = '<tr><td colspan="6" class="text-center">Vazio.</td></tr>'; return; }
         lista.forEach(item => {
-            const [ano, mes, dia] = item.data.split('-');
-            corpo.innerHTML += `
-                <tr>
-                    <td class="small">${dia}/${mes}/${ano}</td>
-                    <td class="fw-bold">${item.descricao}</td>
-                    <td><span class="text-muted small">${item.categoria || '-'}</span></td>
-                    <td><span class="text-muted small">${item.metodoDePagamento || '-'}</span></td>
-                    <td><span class="badge badge-${item.tipoDeTransacao}">${item.tipoDeTransacao}</span></td>
-                    <td class="text-end fw-bold text-dark">${item.valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
-                </tr>`;
+            const valor = parseFloat(item.valor) || 0;
+            const isEnt = item.tipoDeTransacao === 'Entrada';
+            const [a, m, d] = item.data.split('-');
+            corpo.innerHTML += `<tr>
+                <td>${d}/${m}/${a}</td><td class="fw-bold">${item.descricao}</td>
+                <td><span class="badge ${isEnt ? 'bg-success':'bg-danger'}">${item.tipoDeTransacao}</span></td>
+                <td style="font-size:0.8em">${item.categoria}<br>${item.metodoDePagamento}</td>
+                <td class="text-end fw-bold" style="color:${isEnt?'green':'red'}">R$ ${valor.toFixed(2)}</td>
+                <td class="text-center no-print">
+                    <button onclick='prepararEdicao(${JSON.stringify(item)})' class="btn btn-sm btn-outline-warning">✏️</button>
+                    <button onclick="deletarTransacao('${item.id}')" class="btn btn-sm btn-outline-danger">🗑️</button>
+                </td></tr>`;
         });
     }
 
-    window.onload = carregarListaGeral;
+    // --- NOVA TABELA DE INVESTIMENTOS ---
+    function renderizarTabelaInvestimentos(lista) {
+        const corpo = document.getElementById('tabelaInvestimentos');
+        corpo.innerHTML = '';
+        if(lista.length === 0) {
+            corpo.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">Nenhum investimento encontrado.</td></tr>';
+            return;
+        }
+
+        lista.forEach(item => {
+            const valor = parseFloat(item.ValorInvestimento) || 0;
+            // Tratamento da Data: Se vier YYYY-MM-DD
+            let dataFormatada = item.DataInvestimento;
+            if(item.DataInvestimento && item.DataInvestimento.includes('-')){
+                const [ano, mes, dia] = item.DataInvestimento.split('-');
+                dataFormatada = `${dia}/${mes}/${ano}`;
+            }
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>${dataFormatada}</td>
+                    <td class="fw-bold text-dark">${item.NomeInvestimento}</td>
+                    <td><span class="badge bg-primary">${item.TipoInvestimento}</span></td>
+                    <td class="text-end fw-bold text-invest">R$ ${valor.toFixed(2)}</td>
+                    <td class="text-center">
+                        <button onclick="deletarInvestimento('${item.id}')" class="btn btn-sm btn-outline-danger" title="Resgatar/Excluir">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // ============================================
+    // 4. AUXILIARES
+    // ============================================
+    function calcularPainel(lista) {
+        let ent = 0, sai = 0;
+        lista.forEach(item => {
+            const v = parseFloat(item.valor)||0;
+            if(item.tipoDeTransacao === 'Entrada') ent += v; else sai += v;
+        });
+        document.getElementById('totalEntradas').innerText = `R$ ${ent.toFixed(2)}`;
+        document.getElementById('totalSaidas').innerText = `R$ ${sai.toFixed(2)}`;
+        document.getElementById('saldoFinal').innerText = `R$ ${(ent-sai).toFixed(2)}`;
+        const tot = ent+sai;
+        document.getElementById('barraEntrada').style.width = tot>0 ? `${(ent/tot)*100}%` : '50%';
+        document.getElementById('barraSaida').style.width = tot>0 ? `${(sai/tot)*100}%` : '50%';
+    }
+
+    function filtrarVisualizacao(tipo) {
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+        let lista = [];
+        if (tipo === 'todos') { document.getElementById('btnTodos').classList.add('active'); lista = listaOriginal; }
+        else if (tipo === 'entrada') { document.getElementById('btnEntrada').classList.add('active'); lista = listaOriginal.filter(i => i.tipoDeTransacao === 'Entrada'); }
+        else { document.getElementById('btnSaida').classList.add('active'); lista = listaOriginal.filter(i => i.tipoDeTransacao === 'Despesas'); }
+        renderizarTabela(lista);
+    }
+
+    async function BuscarPorData() {
+        const i = document.getElementById('inicio').value, f = document.getElementById('fim').value;
+        if (i && f) {
+            const res = await fetch(`/api/transacoes/BuscarPeriodo?inicio=${i}&fim=${f}`);
+            if(res.ok) { listaOriginal = await res.json(); renderizarTabela(listaOriginal); calcularPainel(listaOriginal); renderizarGraficos(listaOriginal); }
+        }
+    }
+
+    function prepararEdicao(item) {
+        document.getElementById('idTransacao').value = item.id;
+        document.getElementById('postDescricao').value = item.descricao;
+        document.getElementById('postValor').value = item.valor;
+        document.getElementById('postData').value = item.data;
+        document.getElementById('postCategoria').value = item.categoria;
+        document.getElementById('postMetodo').value = item.metodoDePagamento;
+        document.getElementById('postTipo').value = item.tipoDeTransacao;
+        document.getElementById('tituloForm').innerText = "Editando Registro";
+        document.getElementById('btnCancelar').classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limparFormulario() {
+        document.getElementById('idTransacao').value = '';
+        document.getElementById('postDescricao').value = '';
+        document.getElementById('postValor').value = '';
+        document.getElementById('tituloForm').innerText = "Nova Transação";
+        document.getElementById('btnCancelar').classList.add('d-none');
+    }
+
+    async function deletarTransacao(id) {
+        if(confirm("Apagar?")) { await fetch(`/api/transacoes/${id}`, { method: 'DELETE' }); carregarListaGeral(); }
+    }
 </script>
 </body>
 </html>

@@ -3,3 +3,19 @@
 /workspace.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+
+# --- Arquivos Compilados (Java/Maven) ---
+target/
+*.class
+
+# --- Arquivos do IntelliJ (para garantir) ---
+.idea/
+*.iml
+
+# --- Arquivos de Sistema ---
+*.log
+.DS_Store
+Thumbs.db
+
+# --- SEGURANÇA: BLOQUEAR SENHA DO BANCO ---
+src/main/resources/application.properties

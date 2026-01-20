@@ -81,6 +81,8 @@ public class TransacaoService {
 
     public List<Transacao> BuscarDataTipo(tipoDeTransacao tipoDeTransacao, LocalDate inicio, LocalDate fim) {
         return  repository.findByTipoDeTransacaoAndDataBetween(tipoDeTransacao, inicio, fim);
+    }public List<Transacao>Buscarperiodo(LocalDate inicio, LocalDate fim) {
+        return  repository.findByDataBetween(inicio, fim);
     }
 
     public BigDecimal somarPeriodo(tipoDeTransacao tipoDeTransacao, LocalDate inicio, LocalDate fim) {

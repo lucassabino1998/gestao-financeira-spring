@@ -1,5 +1,7 @@
 package finaceiro.demo.dto;
 
+import finaceiro.demo.model.Categoria;
+import finaceiro.demo.model.MetodoDePagamento;
 import finaceiro.demo.model.tipoDeTransacao;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,8 +26,8 @@ public class Transacaorequest {
     @NotNull(message = "obrigatorio data")
     private LocalDate data;
 
-    @NotBlank(message = "categoria obrigatoria")
-    private String categoria;
-
-    private String metodoDePagamento;
+    @NotNull(message = "Categoria obrigatoria")
+    private Categoria categoria;
+    @NotNull(message = "campo metodo obrigatorio")
+    private MetodoDePagamento metodoDePagamento;
 }
