@@ -9,4 +9,5 @@ RUN ./mvnw clean install -DskipTests
 # Porta padrão do Render
 EXPOSE 8080
 # Comando para iniciar sua API
-ENTRYPOINT ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
+# Se o seu JAR fica em demo/target/...
+ENTRYPOINT ["java", "-jar", "demo/target/demo-0.0.1-SNAPSHOT.jar"]
