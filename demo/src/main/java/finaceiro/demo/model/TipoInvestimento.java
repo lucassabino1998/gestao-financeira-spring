@@ -2,7 +2,7 @@ package finaceiro.demo.model;
 
 public enum TipoInvestimento {
     RENDA_FIXA,
-    CRIPTOMOESDAS,
+    CRIPTOMOEDAS,
     FUNDOS_IMOBILIARIOS,
     INVESTIMENTO_EXTERIOR,
     ACOES

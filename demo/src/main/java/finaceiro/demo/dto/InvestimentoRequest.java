@@ -9,15 +9,15 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-// Importe seu Enum corretamente abaixo (ajuste o pacote se necessário)
+
 import finaceiro.demo.model.TipoInvestimento;
 
 @Data
 public class InvestimentoRequest {
 
-    @JsonProperty("NomeInvestimento") // Diz: "O JSON manda com Maiúscula..."
+    @JsonProperty("NomeInvestimento")
     @NotBlank(message = "O nome não pode ser vazio")
-    private String nomeInvestimento;  // "...mas o Java usa minúscula"
+    private String nomeInvestimento;  //
 
     @JsonProperty("ValorInvestimento")
     @NotNull(message = "Valor é obrigatório")
@@ -29,8 +29,12 @@ public class InvestimentoRequest {
     private LocalDate dataInvestimento;
 
     @JsonProperty("TipoInvestimento")
-    @NotNull(message = "O tipo é obrigatório") // Use NotNull para Enums!
-    // Na classe Investimentos.java (Model)
-    @Enumerated(EnumType.STRING) // <--- Garante que salve "CRIPTOMOEDAS" (texto) e não 0, 1, 2...
+    @NotNull(message = "O tipo é obrigatório")
+
+    @Enumerated(EnumType.STRING)
     private TipoInvestimento tipoInvestimento;
+
+    @JsonProperty("quantidade")
+    @Positive(message = "A quantidade deve ser positiva")
+    private BigDecimal quantidade;
 }

@@ -29,4 +29,8 @@ public class Investimentos {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate DataInvestimento;
 
+    @Column(precision = 19, scale = 10)
+    private BigDecimal quantidade;
+    private BigDecimal valorAtual;
+
 }
