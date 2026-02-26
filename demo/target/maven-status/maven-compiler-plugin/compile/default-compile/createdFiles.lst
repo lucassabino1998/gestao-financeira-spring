@@ -6,6 +6,7 @@ finaceiro\demo\config\CorsConfig.class
 finaceiro\demo\dto\Transacaorequest.class
 finaceiro\demo\controler\GerenciadorDeErros.class
 finaceiro\demo\model\Investimentos$InvestimentosBuilder.class
+finaceiro\demo\config\SecurityConfig.class
 finaceiro\demo\controler\CryptoController.class
 finaceiro\demo\model\MetodoDePagamento.class
 finaceiro\demo\model\Transacao.class
