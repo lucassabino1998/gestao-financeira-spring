@@ -18,4 +18,5 @@ EXPOSE 8080
 
 # O SEGREDO: Como seu JAR está em demo/demo/target,
 # e o Maven roda na pasta atual, o caminho final é demo/target/
-ENTRYPOINT ["java", "-jar", "demo/target/demo-0.0.1-SNAPSHOT.jar"]
+# REMOVA o "demo/" da frente do target
+ENTRYPOINT ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
